@@ -25,7 +25,7 @@ class _MemoAuthAppState extends State<MemoAuthApp> {
             children: <Widget>[
               const Center(
                 child: Text(
-                  "Memo Workflow",
+                  "Memo Workflow App",
                   style: TextStyle(
                       color: Colors.blue,
                       fontSize: 48.0,
