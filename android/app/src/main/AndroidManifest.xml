@@ -1,7 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
 
-<user-permission android:name="android.permission.USE_FINGERPRINT"></user-permission>
+    <!-- Permission for biometric authentication -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+
+    <!-- Permission for fingerprint authentication (for older versions of Android) -->
+    <uses-permission android:name="android.permission.USE_FINGERPRINT" />
 
     <application
         android:label="memoWorkflow"

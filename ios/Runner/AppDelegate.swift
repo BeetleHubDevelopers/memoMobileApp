@@ -1,5 +1,6 @@
 import Flutter
 import UIKit
+import local_auth
 
 @UIApplicationMain
 @objc class AppDelegate: FlutterAppDelegate {

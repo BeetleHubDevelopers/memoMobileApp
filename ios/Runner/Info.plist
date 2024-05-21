@@ -16,6 +16,12 @@
 	<string>flutter_application_1</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
+	<!-- permission for face ID -->
+	<key>NSFaceIDUsageDescription</key>
+	<!-- Permission for Biometrics Auth -->
+	<string>We use Face ID to authenticate you for secure access to the app.</string>
+	<key>NSBiometricUsageDescription</key>
+	<string>We use biometrics to authenticate you for secure access to the app.</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
