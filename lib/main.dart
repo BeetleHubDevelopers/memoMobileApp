@@ -26,6 +26,7 @@ class FingerprintAuthPage extends StatefulWidget {
 class FingerprintAuthPageState extends State<FingerprintAuthPage> {
   final LocalAuthentication auth = LocalAuthentication();
   String _message = "Please authenticate";
+  String _localizedReason = 'Scan your biometric to authenticate';
 
   Future<void> _authenticate() async {
     bool authenticated = false;
@@ -33,23 +34,35 @@ class FingerprintAuthPageState extends State<FingerprintAuthPage> {
       // Check if biometrics are available and any biometric method is enrolled
       bool canCheckBiometrics = await auth.canCheckBiometrics;
       bool isBiometricSupported = await auth.isDeviceSupported();
-      List<BiometricType> availableBiometrics = await auth.getAvailableBiometrics();
+      List<BiometricType> availableBiometrics =
+          await auth.getAvailableBiometrics();
 
-      if (!canCheckBiometrics || !isBiometricSupported || availableBiometrics.isEmpty) {
+      if (!canCheckBiometrics ||
+          !isBiometricSupported ||
+          availableBiometrics.isEmpty) {
         setState(() {
           _message = "Biometric authentication is not available";
         });
         return;
       }
 
+      // Set localized reason based on available biometrics
+      if (availableBiometrics.contains(BiometricType.face)) {
+        _localizedReason = 'Scan your faceID to authenticate';
+      } else if (availableBiometrics.contains(BiometricType.fingerprint)) {
+        _localizedReason = 'Scan your fingerprint to authenticate';
+      }
+
       authenticated = await auth.authenticate(
-        localizedReason: 'Scan your fingerprint to authenticate',
+        localizedReason: _localizedReason,
         options: const AuthenticationOptions(
           biometricOnly: true,
         ),
       );
       setState(() {
-        _message = authenticated ? "Authentication successful" : "Authentication failed";
+        _message = authenticated
+            ? "Authentication successful"
+            : "Authentication failed";
       });
     } catch (e) {
       setState(() {
