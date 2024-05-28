@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:http/http.dart' as http;
+import 'package:memoauthapp/access_token.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -41,7 +42,7 @@ class SplashScreenState extends State<SplashScreen> {
   _navigateToNextScreen() async {
     await Future.delayed(const Duration(seconds: 3));
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('accessToken');
+    String? token = prefs.getString('access_token');
     if (token != null && token.isNotEmpty) {
       if (mounted) {
         Navigator.pushReplacement(
@@ -125,10 +126,10 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseBody = jsonDecode(response.body);
         if (responseBody['data'] != null &&
-            responseBody['data']['accessToken'] != null) {
-          String accessToken = responseBody['data']['accessToken'] as String;
+            responseBody['data']['access_token'] != null) {
+          String accessToken = responseBody['data']['access_token'] as String;
           SharedPreferences prefs = await SharedPreferences.getInstance();
-          await prefs.setString('accessToken', accessToken);
+          await prefs.setString('access_token', accessToken);
           if (mounted) {
             Navigator.pushReplacement(
               context,
