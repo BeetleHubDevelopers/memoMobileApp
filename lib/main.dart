@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:http/http.dart' as http;
-import 'package:memoauthapp/access_token.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
