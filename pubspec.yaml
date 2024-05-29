@@ -12,6 +12,7 @@ dependencies:
   http: ^1.2.1
   local_auth: ^2.2.0
   shared_preferences: ^2.2.3
+  uuid: ^4.4.0
 
 dev_dependencies:
   flutter_test:
