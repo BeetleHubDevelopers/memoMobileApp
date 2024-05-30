@@ -48,10 +48,7 @@ class SplashScreenState extends State<SplashScreen> {
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-              builder: (context) => const FingerprintAuthPage(
-                    uid: 'uid',
-                  )),
+          MaterialPageRoute(builder: (context) => const RequestApp()),
         );
       }
     } else {
