@@ -1,6 +1,10 @@
+// ignore_for_file: camel_case_types, avoid_print
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:memoauthapp/main.dart';
+import 'package:memoauthapp/request.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -16,10 +20,9 @@ class _deviceRegState extends State<deviceReg> {
   bool _isLoading = false;
 
   Future<void> _registerDevice() async {
-    // Check if the device name is empty or contains only spaces
     if (_deviceNameController.text.trim().isEmpty) {
       _showErrorDialog('Please enter a valid device name');
-      return; // Exit the function without registering the device
+      return;
     }
 
     setState(() {
@@ -31,7 +34,23 @@ class _deviceRegState extends State<deviceReg> {
     final accessToken = prefs.getString('access_token') ?? "";
 
     try {
-      final response = await http.post(
+      final checkResponse = await http.get(
+        Uri.parse(
+            'https://kdsg-authenticator-43d1272b8d77.herokuapp.com/api/devices/check?device_code=$deviceUid'),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+        },
+      );
+
+      if (checkResponse.statusCode == 200) {
+        final responseData = jsonDecode(checkResponse.body);
+        if (responseData['registered'] == true) {
+          _showErrorDialog('Device is already registered');
+          return;
+        }
+      }
+
+      final registerResponse = await http.post(
         Uri.parse(
             'https://kdsg-authenticator-43d1272b8d77.herokuapp.com/api/devices/link'),
         headers: {
@@ -44,15 +63,21 @@ class _deviceRegState extends State<deviceReg> {
         }),
       );
 
-      if (response.statusCode >= 200 && response.statusCode <= 300) {
+      if (registerResponse.statusCode >= 200 &&
+          registerResponse.statusCode <= 300) {
         prefs.setString('device_uid', deviceUid);
-        _showSuccesfulDialog('Device registered successfully');
+        _showSuccessfulDialog('Device registered successfully!').then((_) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const RequestApp()),
+          );
+        });
       } else {
-        // Log status code and response body for debugging
-        print('Failed to register device. Status code: ${response.statusCode}');
-        print('Response body: ${response.body}');
+        print(
+            'Failed to register device. Status code: ${registerResponse.statusCode}');
+        print('Response body: ${registerResponse.body}');
         throw Exception(
-            'Failed to register device. Status code: ${response.statusCode}');
+            'Failed to register device. Status code: ${registerResponse.statusCode}');
       }
     } catch (e) {
       _showErrorDialog('Failed to register device: $e');
@@ -63,7 +88,6 @@ class _deviceRegState extends State<deviceReg> {
     }
   }
 
-  //displays whatever errors encountered
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -84,13 +108,12 @@ class _deviceRegState extends State<deviceReg> {
     );
   }
 
-  //displays whatever errors encountered
-  void _showSuccesfulDialog(String message) {
-    showDialog(
+  Future<void> _showSuccessfulDialog(String message) async {
+    return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Successful'),
+          title: const Text('Success'),
           content: Text(message),
           actions: <Widget>[
             TextButton(
@@ -108,7 +131,19 @@ class _deviceRegState extends State<deviceReg> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginScreenPage()),
+            );
+          },
+        ),
+      ),
+      backgroundColor: Colors.white,
       body: Center(
         child: SingleChildScrollView(
           child: Container(
@@ -117,6 +152,13 @@ class _deviceRegState extends State<deviceReg> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
+                Center(
+                  child: Image.asset(
+                    'assets/kdsglogo.png',
+                    height: 150,
+                    width: 150,
+                  ),
+                ),
                 const Text(
                   'Register Device',
                   style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
@@ -138,7 +180,7 @@ class _deviceRegState extends State<deviceReg> {
                       borderRadius: BorderRadius.all(Radius.circular(20.0)),
                     ),
                   ),
-                  keyboardType: TextInputType.emailAddress,
+                  keyboardType: TextInputType.text,
                 ),
                 const SizedBox(height: 16.0),
                 _isLoading

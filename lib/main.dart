@@ -1,10 +1,11 @@
-//ignore_for_file: use_build_context_synchronously
+//ignore_for_file: use_build_context_synchronously, unused_element, avoid_print
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:memoauthapp/device_reg.dart';
+import 'package:memoauthapp/request.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -31,7 +32,7 @@ class SplashScreen extends StatefulWidget {
   SplashScreenState createState() => SplashScreenState();
 }
 
-//initializes the splah screen before the login page
+//initializes the splash screen before the login page
 class SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
@@ -47,7 +48,10 @@ class SplashScreenState extends State<SplashScreen> {
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const FingerprintAuthPage()),
+          MaterialPageRoute(
+              builder: (context) => const FingerprintAuthPage(
+                    uid: 'uid',
+                  )),
         );
       }
     } else {
@@ -60,7 +64,7 @@ class SplashScreenState extends State<SplashScreen> {
     }
   }
 
-//the first screen you see (spscreen) before the login screen
+  //the first screen you see (splash screen) before the login screen
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
@@ -113,7 +117,7 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
       _isLoading = true;
     });
 
-//this handles the request from the login endpoint
+    //this handles the request from the login endpoint
     var client = http.Client();
     try {
       var response = await client.post(
@@ -130,12 +134,15 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
           String accessToken = responseBody['data']['access_token'] as String;
           SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.setString('access_token', accessToken);
-          if (mounted) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const deviceReg()),
-            );
-          }
+
+          _showSuccessfulDialog('Login Successful!').then((_) {
+            if (mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const deviceReg()),
+              );
+            }
+          });
         } else {
           _showErrorDialog('Login failed. Please check your credentials.');
         }
@@ -154,9 +161,9 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
     }
   }
 
-//displays whatever errors encountered
-  void _showErrorDialog(String message) {
-    showDialog(
+  //displays whatever errors encountered
+  Future<void> _showErrorDialog(String message) async {
+    return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -175,11 +182,34 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
     );
   }
 
-//login page for the app
+  Future<void> _showSuccessfulDialog(String message) async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Success'),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  //login page for the app
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+      ),
+      backgroundColor: Colors.white,
       body: Center(
         child: SingleChildScrollView(
           child: Container(
@@ -188,6 +218,16 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
+                Center(
+                  child: Image.asset(
+                    'assets/kdsglogo.png',
+                    height: 150,
+                    width: 150,
+                  ),
+                ),
+                const SizedBox(
+                  height: 20.0,
+                ),
                 const Text(
                   'Login',
                   style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
@@ -204,6 +244,7 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
                       borderSide: BorderSide(color: Colors.teal),
                       borderRadius: BorderRadius.all(Radius.circular(20.0)),
                     ),
+                    suffixIcon: Icon(Icons.email_rounded),
                     focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.teal, width: 1.0),
                       borderRadius: BorderRadius.all(Radius.circular(20.0)),
@@ -274,7 +315,9 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
 
 //biometric page screen
 class FingerprintAuthPage extends StatefulWidget {
-  const FingerprintAuthPage({super.key});
+  final String uid;
+
+  const FingerprintAuthPage({super.key, required this.uid});
 
   @override
   FingerprintAuthPageState createState() => FingerprintAuthPageState();
@@ -314,11 +357,13 @@ class FingerprintAuthPageState extends State<FingerprintAuthPage> {
           biometricOnly: true,
         ),
       );
-      setState(() {
-        _message = authenticated
-            ? "Authentication successful"
-            : "Authentication failed";
-      });
+
+      // Handle authentication response
+      if (authenticated) {
+        _handleAuthentication(context, true);
+      } else {
+        _handleAuthentication(context, false);
+      }
     } catch (e) {
       setState(() {
         _message = "Error: ${e.toString()}";
@@ -326,30 +371,127 @@ class FingerprintAuthPageState extends State<FingerprintAuthPage> {
     }
   }
 
-//background color for the biometric page screen
+  Future<void> _handleAuthentication(
+      BuildContext context, bool authenticated) async {
+    String endpoint =
+        'https://kdsg-authenticator-43d1272b8d77.herokuapp.com/api/request/complete/${widget.uid}';
+
+    try {
+      var response = await http.post(
+        Uri.parse(endpoint),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'approved': authenticated}),
+      );
+
+      if (response.statusCode == 200) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("Authentication"),
+              content: Text(
+                  "Authentication ${authenticated ? 'successful' : 'failed'}"),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("Error"),
+              content: Text("Error: ${response.reasonPhrase}"),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    } catch (e) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("Error"),
+            content: Text("Error: ${e.toString()}"),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
+  //  Future<String> getRequestUid() async {
+  //   // TO DO: implement this function to get the uid from the request
+  //   // For example, you can use a SharedPreferences instance to store the uid
+  //   // or retrieve it from a database or API call
+  //   // replace with the actual uid
+  // }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.black, Colors.blue[900]!],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
+        padding: const EdgeInsets.only(top: 10),
+        decoration: const BoxDecoration(),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              ElevatedButton(
-                onPressed: _authenticate,
-                child: const Text("Authenticate"),
+              Column(
+                children: [
+                  Image.asset(
+                    'assets/kdsglogo.png',
+                    height: 100,
+                    width: 100,
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 20, horizontal: 30),
+                      backgroundColor: Colors.teal,
+                    ),
+                    onPressed: _authenticate,
+                    child: const Text(
+                      "Authenticate",
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 20),
               Text(
                 _message,
-                style: const TextStyle(color: Colors.white, fontSize: 18),
+                style: const TextStyle(
+                    color: Colors.black54,
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold),
               ),
             ],
           ),
