@@ -1,8 +1,7 @@
-//ignore_for_file: use_build_context_synchronously, unused_element, avoid_print
+//ignore_for_file: use_build_context_synchronously, unused_element, avoid_print, unused_local_variable
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:local_auth/local_auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:memoauthapp/device_reg.dart';
 import 'package:memoauthapp/request.dart';
@@ -48,7 +47,7 @@ class SplashScreenState extends State<SplashScreen> {
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const RequestApp()),
+          MaterialPageRoute(builder: (context) => RequestApp()),
         );
       }
     } else {
@@ -106,7 +105,7 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
     final String password = _passwordController.text;
 
     if (username.isEmpty || password.isEmpty) {
-      _showErrorDialog('Email and Password cannot be empty');
+      _showWarningDialog('Email and Password cannot be empty');
       return;
     }
 
@@ -165,6 +164,26 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Error'),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showWarningDialog(String message) async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Warning'),
           content: Text(message),
           actions: <Widget>[
             TextButton(
@@ -303,194 +322,6 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
                       ),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-//biometric page screen
-class FingerprintAuthPage extends StatefulWidget {
-  final String uid;
-
-  const FingerprintAuthPage({super.key, required this.uid});
-
-  @override
-  FingerprintAuthPageState createState() => FingerprintAuthPageState();
-}
-
-class FingerprintAuthPageState extends State<FingerprintAuthPage> {
-  final LocalAuthentication auth = LocalAuthentication();
-  String _message = "Please authenticate";
-  String _localizedReason = 'Scan your biometric to authenticate';
-
-  Future<void> _authenticate() async {
-    bool authenticated = false;
-    try {
-      bool canCheckBiometrics = await auth.canCheckBiometrics;
-      bool isBiometricSupported = await auth.isDeviceSupported();
-      List<BiometricType> availableBiometrics =
-          await auth.getAvailableBiometrics();
-
-      if (!canCheckBiometrics ||
-          !isBiometricSupported ||
-          availableBiometrics.isEmpty) {
-        setState(() {
-          _message = "Biometric authentication is not available";
-        });
-        return;
-      }
-
-      if (availableBiometrics.contains(BiometricType.face)) {
-        _localizedReason = 'Scan your faceID to authenticate';
-      } else if (availableBiometrics.contains(BiometricType.fingerprint)) {
-        _localizedReason = 'Scan your fingerprint to authenticate';
-      }
-
-      authenticated = await auth.authenticate(
-        localizedReason: _localizedReason,
-        options: const AuthenticationOptions(
-          biometricOnly: true,
-        ),
-      );
-
-      // Handle authentication response
-      if (authenticated) {
-        _handleAuthentication(context, true);
-      } else {
-        _handleAuthentication(context, false);
-      }
-    } catch (e) {
-      setState(() {
-        _message = "Error: ${e.toString()}";
-      });
-    }
-  }
-
-  Future<void> _handleAuthentication(
-      BuildContext context, bool authenticated) async {
-    String endpoint =
-        'https://kdsg-authenticator-43d1272b8d77.herokuapp.com/api/request/complete/${widget.uid}';
-
-    try {
-      var response = await http.post(
-        Uri.parse(endpoint),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'approved': authenticated}),
-      );
-
-      if (response.statusCode == 200) {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text("Authentication"),
-              content: Text(
-                  "Authentication ${authenticated ? 'successful' : 'failed'}"),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('OK'),
-                ),
-              ],
-            );
-          },
-        );
-      } else {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text("Error"),
-              content: Text("Error: ${response.reasonPhrase}"),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('OK'),
-                ),
-              ],
-            );
-          },
-        );
-      }
-    } catch (e) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text("Error"),
-            content: Text("Error: ${e.toString()}"),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
-    }
-  }
-
-  //  Future<String> getRequestUid() async {
-  //   // TO DO: implement this function to get the uid from the request
-  //   // For example, you can use a SharedPreferences instance to store the uid
-  //   // or retrieve it from a database or API call
-  //   // replace with the actual uid
-  // }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Container(
-        padding: const EdgeInsets.only(top: 10),
-        decoration: const BoxDecoration(),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Column(
-                children: [
-                  Image.asset(
-                    'assets/kdsglogo.png',
-                    height: 100,
-                    width: 100,
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 20, horizontal: 30),
-                      backgroundColor: Colors.teal,
-                    ),
-                    onPressed: _authenticate,
-                    child: const Text(
-                      "Authenticate",
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Text(
-                _message,
-                style: const TextStyle(
-                    color: Colors.black54,
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold),
-              ),
-            ],
           ),
         ),
       ),

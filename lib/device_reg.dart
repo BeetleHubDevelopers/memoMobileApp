@@ -30,21 +30,24 @@ class _deviceRegState extends State<deviceReg> {
     });
 
     final prefs = await SharedPreferences.getInstance();
-    final deviceUid = prefs.getString('device_uid') ?? const Uuid().v4();
+    final deviceCode = const Uuid().v4();
     final accessToken = prefs.getString('access_token') ?? "";
 
     try {
       final checkResponse = await http.get(
         Uri.parse(
-            'https://kdsg-authenticator-43d1272b8d77.herokuapp.com/api/devices/check?device_code=$deviceUid'),
+            'https://kdsg-authenticator-43d1272b8d77.herokuapp.com/api/devices/link'),
         headers: {
           'Authorization': 'Bearer $accessToken',
         },
       );
 
-      if (checkResponse.statusCode == 200) {
+      if (checkResponse.statusCode >= 200 && checkResponse.statusCode <= 300) {
         final responseData = jsonDecode(checkResponse.body);
-        if (responseData['registered'] == true) {
+        if (responseData['data'] == true) {
+          setState(() {
+            _isLoading = false;
+          });
           _showErrorDialog('Device is already registered');
           return;
         }
@@ -58,18 +61,18 @@ class _deviceRegState extends State<deviceReg> {
           'Authorization': 'Bearer $accessToken'
         },
         body: jsonEncode({
-          'device_code': deviceUid,
+          'device_code': deviceCode,
           'device_name': _deviceNameController.text,
         }),
       );
 
       if (registerResponse.statusCode >= 200 &&
           registerResponse.statusCode <= 300) {
-        prefs.setString('device_uid', deviceUid);
+        await prefs.setString('device_code', deviceCode);
         _showSuccessfulDialog('Device registered successfully!').then((_) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const RequestApp()),
+            MaterialPageRoute(builder: (context) => RequestApp()),
           );
         });
       } else {
