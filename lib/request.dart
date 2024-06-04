@@ -32,6 +32,7 @@ class _RequestAppState extends State<RequestApp> {
     }
   }
 
+// fetches all the requests
   Future<void> fetchRequests() async {
     final prefs = await SharedPreferences.getInstance();
     var accessToken = prefs.getString('access_token') ?? '';
@@ -106,6 +107,7 @@ class _RequestAppState extends State<RequestApp> {
     );
   }
 
+// handles the approve request
   Future<void> _approveRequest(BuildContext context, String uid) async {
     final result = await Navigator.push(
       context,
@@ -166,7 +168,7 @@ class _RequestAppState extends State<RequestApp> {
       // Handle the case where the user cancels the authentication or declines the request
     }
   }
-
+// 
   Future<void> _declineRequest(BuildContext context, String uid) async {
     final shouldDecline = await showDialog<bool>(
       context: context,
@@ -204,7 +206,7 @@ class _RequestAppState extends State<RequestApp> {
         }
 
         var url = Uri.parse(
-            'https://kdsg-authenticator-43d1272b8d77.herokuapp.com/api/requests/complete/$uid');
+            'https://kdsg-authenticator-43d1272b8d77.herokuapp.blackcom/api/requests/complete/$uid');
         var response = await client.patch(
           url,
           headers: {
@@ -284,7 +286,7 @@ class _RequestAppState extends State<RequestApp> {
                           } else if (status == 'DECLINED') {
                             statusColor = Colors.red;
                           } else {
-                            statusColor = Colors.black;
+                            statusColor = Colors.orange;
                           }
 
                           return ListTile(
