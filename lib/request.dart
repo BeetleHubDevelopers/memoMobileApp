@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api, avoid_print, deprecated_member_use
+// ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api, deprecated_member_use
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,8 +14,15 @@ class RequestApp extends StatefulWidget {
 }
 
 class _RequestAppState extends State<RequestApp> {
-  List<dynamic>? _requests;
+  List<dynamic> _pendingRequests = [];
+  List<dynamic> _completedRequests = [];
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshRequests();
+  }
 
   Future<void> _refreshRequests() async {
     setState(() {
@@ -32,7 +39,7 @@ class _RequestAppState extends State<RequestApp> {
     }
   }
 
-// fetches all the requests
+// fetches or get all request from the endpoint
   Future<void> fetchRequests() async {
     final prefs = await SharedPreferences.getInstance();
     var accessToken = prefs.getString('access_token') ?? '';
@@ -59,7 +66,14 @@ class _RequestAppState extends State<RequestApp> {
     } else if (response.statusCode >= 200 && response.statusCode < 300) {
       var jsonResponse = json.decode(response.body);
       setState(() {
-        _requests = jsonResponse['data'] ?? [];
+        _pendingRequests = jsonResponse['data']
+                ?.where((request) => request['status'] == 'PENDING')
+                .toList() ??
+            [];
+        _completedRequests = jsonResponse['data']
+                ?.where((request) => request['status'] != 'PENDING')
+                .toList() ??
+            [];
       });
     } else {
       throw Exception(
@@ -107,7 +121,7 @@ class _RequestAppState extends State<RequestApp> {
     );
   }
 
-// handles the approve request
+  // handles the approve request
   Future<void> _approveRequest(BuildContext context, String uid) async {
     final result = await Navigator.push(
       context,
@@ -149,11 +163,7 @@ class _RequestAppState extends State<RequestApp> {
         } else if (response.statusCode >= 200 && response.statusCode <= 300) {
           _showSuccessfulDialog(context, 'Request has been approved!');
           setState(() {
-            _isLoading = true;
-          });
-          await _refreshRequests();
-          setState(() {
-            _isLoading = false;
+            fetchRequests();
           });
         } else {
           throw Exception(
@@ -164,11 +174,10 @@ class _RequestAppState extends State<RequestApp> {
       } finally {
         client.close();
       }
-    } else {
-      // Handle the case where the user cancels the authentication or declines the request
     }
   }
-// 
+
+// handles the decline request
   Future<void> _declineRequest(BuildContext context, String uid) async {
     final shouldDecline = await showDialog<bool>(
       context: context,
@@ -206,7 +215,7 @@ class _RequestAppState extends State<RequestApp> {
         }
 
         var url = Uri.parse(
-            'https://kdsg-authenticator-43d1272b8d77.herokuapp.blackcom/api/requests/complete/$uid');
+            'https://kdsg-authenticator-43d1272b8d77.herokuapp.com/api/requests/complete/$uid');
         var response = await client.patch(
           url,
           headers: {
@@ -227,11 +236,7 @@ class _RequestAppState extends State<RequestApp> {
         } else if (response.statusCode >= 200 && response.statusCode <= 300) {
           _showSuccessfulDialog(context, 'Request has been declined!');
           setState(() {
-            _isLoading = true;
-          });
-          await _refreshRequests();
-          setState(() {
-            _isLoading = false;
+            fetchRequests();
           });
         } else {
           throw Exception(
@@ -242,11 +247,10 @@ class _RequestAppState extends State<RequestApp> {
       } finally {
         client.close();
       }
-    } else {
-      // Handle the case where the user cancels the decline request
     }
   }
 
+// displays the pending and completed requests
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -260,7 +264,12 @@ class _RequestAppState extends State<RequestApp> {
         debugShowCheckedModeBanner: false,
         home: Scaffold(
           appBar: AppBar(
-            title: const Text('Request'),
+            title: const Center(
+              child: Text(
+                'Requests',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
+              ),
+            ),
             actions: <Widget>[
               IconButton(
                 icon: const Icon(Icons.refresh),
@@ -270,53 +279,101 @@ class _RequestAppState extends State<RequestApp> {
           ),
           body: _isLoading
               ? const Center(child: CircularProgressIndicator())
-              : _requests == null
+              : (_pendingRequests.isEmpty && _completedRequests.isEmpty)
                   ? const Center(child: Text('No requests found.'))
                   : RefreshIndicator(
                       onRefresh: _refreshRequests,
-                      child: ListView.builder(
-                        itemCount: _requests!.length,
-                        itemBuilder: (context, index) {
-                          final request = _requests![index];
-                          final status = request['status'] ?? 'No status';
-                          Color statusColor;
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (_pendingRequests.isNotEmpty) ...[
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(
+                                  'Pending Requests',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineMedium,
+                                ),
+                              ),
+                              ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: _pendingRequests.length,
+                                itemBuilder: (context, index) {
+                                  final request = _pendingRequests[index];
+                                  return ListTile(
+                                    title: Text(request['title'] ?? 'No title'),
+                                    subtitle: const Text(
+                                      'PENDING',
+                                      style: TextStyle(color: Colors.orange),
+                                    ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: <Widget>[
+                                        IconButton(
+                                          icon: const Icon(
+                                              Icons.check_circle_rounded),
+                                          onPressed: () {
+                                            _approveRequest(
+                                                context, request['uid']);
+                                          },
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.close_rounded),
+                                          onPressed: () {
+                                            _declineRequest(
+                                                context, request['uid']);
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                            if (_completedRequests.isNotEmpty) ...[
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(
+                                  'Completed Requests',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineMedium,
+                                ),
+                              ),
+                              ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: _completedRequests.length,
+                                itemBuilder: (context, index) {
+                                  final request = _completedRequests[index];
+                                  final status =
+                                      request['status'] ?? 'No status';
+                                  Color statusColor;
 
-                          if (status == 'APPROVED') {
-                            statusColor = Colors.green;
-                          } else if (status == 'DECLINED') {
-                            statusColor = Colors.red;
-                          } else {
-                            statusColor = Colors.orange;
-                          }
+                                  if (status == 'APPROVED') {
+                                    statusColor = Colors.green;
+                                  } else if (status == 'DECLINED') {
+                                    statusColor = Colors.red;
+                                  } else {
+                                    statusColor = Colors.orange;
+                                  }
 
-                          return ListTile(
-                            title: Text(request['title'] ?? 'No title'),
-                            subtitle: Text(
-                              status,
-                              style: TextStyle(color: statusColor),
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                if (status == 'PENDING')
-                                  IconButton(
-                                    icon:
-                                        const Icon(Icons.check_circle_rounded),
-                                    onPressed: () {
-                                      _approveRequest(context, request['uid']);
-                                    },
-                                  ),
-                                if (status == 'PENDING')
-                                  IconButton(
-                                    icon: const Icon(Icons.close_rounded),
-                                    onPressed: () {
-                                      _declineRequest(context, request['uid']);
-                                    },
-                                  ),
-                              ],
-                            ),
-                          );
-                        },
+                                  return ListTile(
+                                    title: Text(request['title'] ?? 'No title'),
+                                    subtitle: Text(
+                                      status,
+                                      style: TextStyle(color: statusColor),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
                     ),
         ),
@@ -325,6 +382,7 @@ class _RequestAppState extends State<RequestApp> {
   }
 }
 
+// finger print screen
 class FingerprintAuthPage extends StatefulWidget {
   final String uid;
   const FingerprintAuthPage({super.key, required this.uid});
@@ -406,4 +464,4 @@ class _FingerprintAuthPageState extends State<FingerprintAuthPage> {
   }
 }
 
-void main() => runApp(const RequestApp());
+// void main() => runApp(const RequestApp());

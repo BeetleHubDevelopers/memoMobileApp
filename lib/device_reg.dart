@@ -72,7 +72,7 @@ class _deviceRegState extends State<deviceReg> {
         _showSuccessfulDialog('Device registered successfully!').then((_) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => RequestApp()),
+            MaterialPageRoute(builder: (context) => const RequestApp()),
           );
         });
       } else {
@@ -137,7 +137,7 @@ class _deviceRegState extends State<deviceReg> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () {
             Navigator.pushReplacement(
               context,
