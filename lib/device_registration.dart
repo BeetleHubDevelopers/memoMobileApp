@@ -1,21 +1,21 @@
 // ignore_for_file: camel_case_types, avoid_print
 
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:memoauthapp/constants.dart';
 import 'package:memoauthapp/main.dart';
-import 'package:memoauthapp/request.dart';
+import 'package:memoauthapp/authorization_consent.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
-class deviceReg extends StatefulWidget {
-  const deviceReg({super.key});
+class DeviceRegistrationScreen extends StatefulWidget {
+  const DeviceRegistrationScreen({super.key});
 
   @override
-  State<deviceReg> createState() => _deviceRegState();
+  State<DeviceRegistrationScreen> createState() => _DeviceRegistrationScreenState();
 }
 
-class _deviceRegState extends State<deviceReg> {
+class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
   final TextEditingController _deviceNameController = TextEditingController();
   bool _isLoading = false;
 
@@ -31,12 +31,12 @@ class _deviceRegState extends State<deviceReg> {
 
     final prefs = await SharedPreferences.getInstance();
     final deviceCode = const Uuid().v4();
-    final accessToken = prefs.getString('access_token') ?? "";
+    final accessToken = prefs.getString(sharedPrefKeyAccessToken) ?? "";
 
     try {
-      final checkResponse = await http.get(
+      /*final checkResponse = await http.get(
         Uri.parse(
-            'https://kdsg-authenticator-43d1272b8d77.herokuapp.com/api/devices/link'),
+            '$apiBaseUrl/profile/devices/create'),
         headers: {
           'Authorization': 'Bearer $accessToken',
         },
@@ -51,28 +51,29 @@ class _deviceRegState extends State<deviceReg> {
           _showErrorDialog('Device is already registered');
           return;
         }
-      }
+      }*/
 
-      final registerResponse = await http.post(
+      final registerResponse = await httpClient.post(
         Uri.parse(
-            'https://kdsg-authenticator-43d1272b8d77.herokuapp.com/api/devices/link'),
+            '$apiBaseUrl/profile/devices/create'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $accessToken'
         },
         body: jsonEncode({
-          'device_code': deviceCode,
-          'device_name': _deviceNameController.text,
+          'code': deviceCode,
+          'name': _deviceNameController.text,
+          'active': true
         }),
       );
 
       if (registerResponse.statusCode >= 200 &&
           registerResponse.statusCode <= 300) {
-        await prefs.setString('device_code', deviceCode);
+        await prefs.setString(sharedPrefKeyDeviceCode, deviceCode);
         _showSuccessfulDialog('Device registered successfully!').then((_) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const RequestApp()),
+            MaterialPageRoute(builder: (context) => const AuthorizationConsentScreen()),
           );
         });
       } else {

@@ -2,9 +2,9 @@
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:memoauthapp/device_reg.dart';
-import 'package:memoauthapp/request.dart';
+import 'package:memoauthapp/constants.dart';
+import 'package:memoauthapp/device_registration.dart';
+import 'package:memoauthapp/authorization_consent.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -42,16 +42,39 @@ class SplashScreenState extends State<SplashScreen> {
   _navigateToNextScreen() async {
     await Future.delayed(const Duration(seconds: 3));
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('access_token');
-    if (token != null && token.isNotEmpty) {
-      if (mounted) {
+    String? token = prefs.getString(sharedPrefKeyAccessToken);
+    if (mounted) {
+      bool isAuthorized = false;
+      if (token != null) {
+        print("Token is not null. Validating...");
+        try {
+          var response = await httpClient.get(
+            Uri.parse(
+                '$apiBaseUrl/auth/check-auth'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token'
+            },
+          );
+
+          if (response.statusCode >= 200 && response.statusCode <= 300) {
+            isAuthorized = true;
+          } else {
+            print("Status Code: ${response.statusCode}");
+          }
+        } catch (e) {
+          print("An error occurred!");
+          print(e);
+        }
+      }
+
+      if (isAuthorized) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const RequestApp()),
+          MaterialPageRoute(
+              builder: (context) => const AuthorizationConsentScreen()),
         );
-      }
-    } else {
-      if (mounted) {
+      } else {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const LoginScreenPage()),
@@ -114,11 +137,10 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
     });
 
     //this handles the request from the login endpoint
-    var client = http.Client();
     try {
-      var response = await client.post(
+      var response = await httpClient.post(
         Uri.parse(
-            'https://kdsg-authenticator-43d1272b8d77.herokuapp.com/api/auth/login'),
+            '$apiBaseUrl/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'username': username, 'password': password}),
       );
@@ -129,14 +151,25 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
             responseBody['data']['access_token'] != null) {
           String accessToken = responseBody['data']['access_token'] as String;
           SharedPreferences prefs = await SharedPreferences.getInstance();
-          await prefs.setString('access_token', accessToken);
+          await prefs.setString(sharedPrefKeyAccessToken, accessToken);
+          
+          var deviceCode = prefs.getString(sharedPrefKeyDeviceCode);
 
           _showSuccessfulDialog('Login Successful!').then((_) {
             if (mounted) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const deviceReg()),
-              );
+              if (deviceCode != null) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const AuthorizationConsentScreen()),
+                );
+              } else {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const DeviceRegistrationScreen()),
+                );
+              }
             }
           });
         } else {
@@ -148,7 +181,6 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
     } catch (e) {
       _showErrorDialog('An error occurred. Please try again later. Error: $e');
     } finally {
-      client.close();
       if (mounted) {
         setState(() {
           _isLoading = false;

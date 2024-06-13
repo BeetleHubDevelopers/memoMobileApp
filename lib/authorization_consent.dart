@@ -1,19 +1,19 @@
 // ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api, deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:memoauthapp/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:local_auth/local_auth.dart';
 
-class RequestApp extends StatefulWidget {
-  const RequestApp({super.key});
+class AuthorizationConsentScreen extends StatefulWidget {
+  const AuthorizationConsentScreen({super.key});
 
   @override
-  _RequestAppState createState() => _RequestAppState();
+  _AuthorizationConsentScreenState createState() => _AuthorizationConsentScreenState();
 }
 
-class _RequestAppState extends State<RequestApp> {
+class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen> {
   List<dynamic> _pendingRequests = [];
   List<dynamic> _completedRequests = [];
   bool _isLoading = false;
@@ -42,21 +42,20 @@ class _RequestAppState extends State<RequestApp> {
 // fetches or get all request from the endpoint
   Future<void> fetchRequests() async {
     final prefs = await SharedPreferences.getInstance();
-    var accessToken = prefs.getString('access_token') ?? '';
-    var deviceCode = prefs.getString('device_code') ?? '';
+    var accessToken = prefs.getString(sharedPrefKeyAccessToken) ?? '';
+    var deviceCode = prefs.getString(sharedPrefKeyDeviceCode) ?? '';
 
     if (accessToken.isEmpty || deviceCode.isEmpty) {
       throw Exception('Missing access token or device code');
     }
 
     var url = Uri.parse(
-        'https://kdsg-authenticator-43d1272b8d77.herokuapp.com/api/requests/list');
-    var response = await http.get(
+        '$apiBaseUrl/profile/authorization-consents/list?device_code=$deviceCode');
+    var response = await httpClient.get(
       url,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $accessToken',
-        'Device-ID': deviceCode,
+        'Authorization': 'Bearer $accessToken'
       },
     );
 
@@ -131,27 +130,27 @@ class _RequestAppState extends State<RequestApp> {
     );
 
     if (result == true) {
-      var client = http.Client();
       try {
         final prefs = await SharedPreferences.getInstance();
-        var accessToken = prefs.getString('access_token') ?? '';
-        var deviceCode = prefs.getString('device_code') ?? '';
+        var accessToken = prefs.getString(sharedPrefKeyAccessToken) ?? '';
+        var deviceCode = prefs.getString(sharedPrefKeyDeviceCode) ?? '';
 
         if (accessToken.isEmpty || deviceCode.isEmpty) {
           throw Exception('Missing access token or device code');
         }
 
         var url = Uri.parse(
-            'https://kdsg-authenticator-43d1272b8d77.herokuapp.com/api/requests/complete/$uid');
-        var response = await client.patch(
+            '$apiBaseUrl/profile/authorization-consents/complete');
+        var response = await httpClient.patch(
           url,
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer $accessToken',
-            'Device-ID': deviceCode,
+            'Authorization': 'Bearer $accessToken'
           },
           body: jsonEncode({
+            'uid': uid,
             'action': 'APPROVED',
+            'device_code': deviceCode
           }),
         );
 
@@ -171,9 +170,7 @@ class _RequestAppState extends State<RequestApp> {
         }
       } catch (e) {
         _showErrorDialog(context, 'Failed to approve request: $e');
-      } finally {
-        client.close();
-      }
+      } finally {}
     }
   }
 
@@ -204,27 +201,27 @@ class _RequestAppState extends State<RequestApp> {
     );
 
     if (shouldDecline == true) {
-      var client = http.Client();
       try {
         final prefs = await SharedPreferences.getInstance();
-        var accessToken = prefs.getString('access_token') ?? '';
-        var deviceCode = prefs.getString('device_code') ?? '';
+        var accessToken = prefs.getString(sharedPrefKeyAccessToken) ?? '';
+        var deviceCode = prefs.getString(sharedPrefKeyDeviceCode) ?? '';
 
         if (accessToken.isEmpty || deviceCode.isEmpty) {
           throw Exception('Missing access token or device code');
         }
 
         var url = Uri.parse(
-            'https://kdsg-authenticator-43d1272b8d77.herokuapp.com/api/requests/complete/$uid');
-        var response = await client.patch(
+            '$apiBaseUrl/profile/authorization-consents/complete');
+        var response = await httpClient.patch(
           url,
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer $accessToken',
-            'Device-ID': deviceCode,
+            'Authorization': 'Bearer $accessToken'
           },
           body: jsonEncode({
+            'uid': uid,
             'action': 'DECLINED',
+            'device_code': deviceCode
           }),
         );
 
@@ -244,9 +241,7 @@ class _RequestAppState extends State<RequestApp> {
         }
       } catch (e) {
         _showErrorDialog(context, 'Failed to decline request: $e');
-      } finally {
-        client.close();
-      }
+      } finally {}
     }
   }
 
