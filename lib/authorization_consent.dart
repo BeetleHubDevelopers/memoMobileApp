@@ -1,7 +1,8 @@
-// ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api, deprecated_member_use
+// ignore_for_file: use_build_context_synchronously, deprecated_member_use, library_private_types_in_public_api
 
 import 'package:flutter/material.dart';
 import 'package:memoauthapp/constants.dart';
+import 'package:memoauthapp/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:local_auth/local_auth.dart';
@@ -10,10 +11,12 @@ class AuthorizationConsentScreen extends StatefulWidget {
   const AuthorizationConsentScreen({super.key});
 
   @override
-  _AuthorizationConsentScreenState createState() => _AuthorizationConsentScreenState();
+  _AuthorizationConsentScreenState createState() =>
+      _AuthorizationConsentScreenState();
 }
 
-class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen> {
+class _AuthorizationConsentScreenState
+    extends State<AuthorizationConsentScreen> {
   List<dynamic> _pendingRequests = [];
   List<dynamic> _completedRequests = [];
   bool _isLoading = false;
@@ -39,7 +42,6 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
     }
   }
 
-// fetches or get all request from the endpoint
   Future<void> fetchRequests() async {
     final prefs = await SharedPreferences.getInstance();
     var accessToken = prefs.getString(sharedPrefKeyAccessToken) ?? '';
@@ -120,7 +122,6 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
     );
   }
 
-  // handles the approve request
   Future<void> _approveRequest(BuildContext context, String uid) async {
     final result = await Navigator.push(
       context,
@@ -139,19 +140,16 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
           throw Exception('Missing access token or device code');
         }
 
-        var url = Uri.parse(
-            '$apiBaseUrl/profile/authorization-consents/complete');
+        var url =
+            Uri.parse('$apiBaseUrl/profile/authorization-consents/complete');
         var response = await httpClient.patch(
           url,
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $accessToken'
           },
-          body: jsonEncode({
-            'uid': uid,
-            'action': 'APPROVED',
-            'device_code': deviceCode
-          }),
+          body: jsonEncode(
+              {'uid': uid, 'action': 'APPROVED', 'device_code': deviceCode}),
         );
 
         if (response.statusCode == 404) {
@@ -174,7 +172,6 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
     }
   }
 
-// handles the decline request
   Future<void> _declineRequest(BuildContext context, String uid) async {
     final shouldDecline = await showDialog<bool>(
       context: context,
@@ -210,19 +207,16 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
           throw Exception('Missing access token or device code');
         }
 
-        var url = Uri.parse(
-            '$apiBaseUrl/profile/authorization-consents/complete');
+        var url =
+            Uri.parse('$apiBaseUrl/profile/authorization-consents/complete');
         var response = await httpClient.patch(
           url,
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $accessToken'
           },
-          body: jsonEncode({
-            'uid': uid,
-            'action': 'DECLINED',
-            'device_code': deviceCode
-          }),
+          body: jsonEncode(
+              {'uid': uid, 'action': 'DECLINED', 'device_code': deviceCode}),
         );
 
         if (response.statusCode == 404) {
@@ -245,7 +239,13 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
     }
   }
 
-// displays the pending and completed requests
+  Future<void> _logout(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    Navigator.pushReplacement(context,
+        MaterialPageRoute(builder: (context) => const LoginScreenPage()));
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -259,6 +259,13 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
         debugShowCheckedModeBanner: false,
         home: Scaffold(
           appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(
+                Icons.logout_rounded,
+                color: Colors.red,
+              ),
+              onPressed: _isLoading ? null : () => _logout(context),
+            ),
             title: const Center(
               child: Text(
                 'Requests',
@@ -377,7 +384,6 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
   }
 }
 
-// finger print screen
 class FingerprintAuthPage extends StatefulWidget {
   final String uid;
   const FingerprintAuthPage({super.key, required this.uid});
@@ -458,5 +464,3 @@ class _FingerprintAuthPageState extends State<FingerprintAuthPage> {
     );
   }
 }
-
-// void main() => runApp(const RequestApp());
