@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "718171488883",
+    "project_id": "memomobile-4ea5f",
+    "storage_bucket": "memomobile-4ea5f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:718171488883:android:9cdd53da363714d1f06006",
+        "android_client_info": {
+          "package_name": "com.example.memomobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC3b7jILA3hRvxCdtCakZSwJ-xQIo_sZqw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

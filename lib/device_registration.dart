@@ -12,7 +12,8 @@ class DeviceRegistrationScreen extends StatefulWidget {
   const DeviceRegistrationScreen({super.key});
 
   @override
-  State<DeviceRegistrationScreen> createState() => _DeviceRegistrationScreenState();
+  State<DeviceRegistrationScreen> createState() =>
+      _DeviceRegistrationScreenState();
 }
 
 class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
@@ -21,7 +22,7 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
 
   Future<void> _registerDevice() async {
     if (_deviceNameController.text.trim().isEmpty) {
-      _showErrorDialog('Please enter a valid device name');
+      _showWarningrDialog('Please enter a valid device name');
       return;
     }
 
@@ -34,9 +35,8 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
     final accessToken = prefs.getString(sharedPrefKeyAccessToken) ?? "";
 
     try {
-      /*final checkResponse = await http.get(
-        Uri.parse(
-            '$apiBaseUrl/profile/devices/create'),
+      final checkResponse = await httpClient.get(
+        Uri.parse('$apiBaseUrl/profile/devices/create'),
         headers: {
           'Authorization': 'Bearer $accessToken',
         },
@@ -51,11 +51,10 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
           _showErrorDialog('Device is already registered');
           return;
         }
-      }*/
+      }
 
       final registerResponse = await httpClient.post(
-        Uri.parse(
-            '$apiBaseUrl/profile/devices/create'),
+        Uri.parse('$apiBaseUrl/profile/devices/create'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $accessToken'
@@ -73,7 +72,8 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
         _showSuccessfulDialog('Device registered successfully!').then((_) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const AuthorizationConsentScreen()),
+            MaterialPageRoute(
+                builder: (context) => const AuthorizationConsentScreen()),
           );
         });
       } else {
@@ -92,12 +92,54 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
     }
   }
 
-  void _showErrorDialog(String message) {
+  Future<void> _showWarningrDialog(String message) async {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Error'),
+          title: const Row(
+            children: [
+              Icon(
+                Icons.warning_rounded,
+                color: Colors.orangeAccent,
+              ),
+              SizedBox(
+                width: 8,
+              ),
+              Text('Warning'),
+            ],
+          ),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showErrorDialog(String message) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(
+                Icons.error_outline_rounded,
+                color: Colors.red,
+              ),
+              SizedBox(
+                width: 8,
+              ),
+              Text('Error'),
+            ],
+          ),
           content: Text(message),
           actions: <Widget>[
             TextButton(
@@ -117,7 +159,18 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Success'),
+          title: const Row(
+            children: [
+              Icon(
+                Icons.check_circle_rounded,
+                color: Colors.greenAccent,
+              ),
+              SizedBox(
+                width: 8,
+              ),
+              Text('Success'),
+            ],
+          ),
           content: Text(message),
           actions: <Widget>[
             TextButton(
@@ -176,11 +229,12 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
                       borderRadius: BorderRadius.all(Radius.circular(20.0)),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.teal),
+                      borderSide: BorderSide(color: Color(0xFF117C02)),
                       borderRadius: BorderRadius.all(Radius.circular(20.0)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.teal, width: 1.0),
+                      borderSide:
+                          BorderSide(color: Color(0xFF117C02), width: 1.0),
                       borderRadius: BorderRadius.all(Radius.circular(20.0)),
                     ),
                   ),
@@ -194,7 +248,7 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
                         child: ElevatedButton(
                           onPressed: _registerDevice,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.teal,
+                            backgroundColor: const Color(0xFF117C02),
                             padding: const EdgeInsets.symmetric(vertical: 15.0),
                             textStyle: const TextStyle(
                               fontSize: 30,

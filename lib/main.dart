@@ -1,13 +1,24 @@
-//ignore_for_file: use_build_context_synchronously, unused_element, avoid_print, unused_local_variable
+// ignore_for_file: use_build_context_synchronously, unused_element, avoid_print, unused_local_variable
 
 import 'dart:convert';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:memoauthapp/constants.dart';
 import 'package:memoauthapp/device_registration.dart';
 import 'package:memoauthapp/authorization_consent.dart';
+import 'package:memoauthapp/notification.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  NotificationService.initialize();
+  // Disable hardware keyboard
+  // SystemChannels.keyEvent.setMessageHandler((_) async {
+  //   return null;
+  // });
+
   runApp(const LoginScreen());
 }
 
@@ -23,7 +34,6 @@ class LoginScreen extends StatelessWidget {
   }
 }
 
-//for the splashscreen
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -31,7 +41,6 @@ class SplashScreen extends StatefulWidget {
   SplashScreenState createState() => SplashScreenState();
 }
 
-//initializes the splash screen before the login page
 class SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
@@ -39,7 +48,7 @@ class SplashScreenState extends State<SplashScreen> {
     _navigateToNextScreen();
   }
 
-  _navigateToNextScreen() async {
+  Future<void> _navigateToNextScreen() async {
     await Future.delayed(const Duration(seconds: 3));
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString(sharedPrefKeyAccessToken);
@@ -48,9 +57,8 @@ class SplashScreenState extends State<SplashScreen> {
       if (token != null) {
         print("Token is not null. Validating...");
         try {
-          var response = await httpClient.get(
-            Uri.parse(
-                '$apiBaseUrl/auth/check-auth'),
+          var response = await http.get(
+            Uri.parse('$apiBaseUrl/auth/check-auth'),
             headers: {
               'Content-Type': 'application/json',
               'Authorization': 'Bearer $token'
@@ -83,7 +91,6 @@ class SplashScreenState extends State<SplashScreen> {
     }
   }
 
-  //the first screen you see (splash screen) before the login screen
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
@@ -93,7 +100,7 @@ class SplashScreenState extends State<SplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Image(
-              image: AssetImage('assets/kdsglogo.png'),
+              image: AssetImage('assets/KDSG.jpeg'),
               width: 150,
               height: 150,
             ),
@@ -116,7 +123,6 @@ class LoginScreenPage extends StatefulWidget {
   State<LoginScreenPage> createState() => _LoginScreenPageState();
 }
 
-//declaration of variables for the email and password
 class _LoginScreenPageState extends State<LoginScreenPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -136,11 +142,9 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
       _isLoading = true;
     });
 
-    //this handles the request from the login endpoint
     try {
-      var response = await httpClient.post(
-        Uri.parse(
-            '$apiBaseUrl/auth/login'),
+      var response = await http.post(
+        Uri.parse('$apiBaseUrl/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'username': username, 'password': password}),
       );
@@ -152,7 +156,7 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
           String accessToken = responseBody['data']['access_token'] as String;
           SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.setString(sharedPrefKeyAccessToken, accessToken);
-          
+
           var deviceCode = prefs.getString(sharedPrefKeyDeviceCode);
 
           _showSuccessfulDialog('Login Successful!').then((_) {
@@ -189,13 +193,23 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
     }
   }
 
-  //displays whatever errors encountered
   Future<void> _showErrorDialog(String message) async {
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Error'),
+          title: const Row(
+            children: [
+              Icon(
+                Icons.error_outline_rounded,
+                color: Colors.red,
+              ),
+              SizedBox(
+                width: 8,
+              ),
+              Text('Error'),
+            ],
+          ),
           content: Text(message),
           actions: <Widget>[
             TextButton(
@@ -215,7 +229,18 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Warning'),
+          title: const Row(
+            children: [
+              Icon(
+                Icons.warning_rounded,
+                color: Colors.orangeAccent,
+              ),
+              SizedBox(
+                width: 8,
+              ),
+              Text('Warning'),
+            ],
+          ),
           content: Text(message),
           actions: <Widget>[
             TextButton(
@@ -235,7 +260,18 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Success'),
+          title: const Row(
+            children: [
+              Icon(
+                Icons.check_circle_rounded,
+                color: Colors.greenAccent,
+              ),
+              SizedBox(
+                width: 8,
+              ),
+              Text('Success'),
+            ],
+          ),
           content: Text(message),
           actions: <Widget>[
             TextButton(
@@ -250,7 +286,6 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
     );
   }
 
-  //login page for the app
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -268,7 +303,7 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
               children: <Widget>[
                 Center(
                   child: Image.asset(
-                    'assets/kdsglogo.png',
+                    'assets/KDSG.jpeg',
                     height: 150,
                     width: 150,
                   ),
@@ -289,12 +324,13 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
                       borderRadius: BorderRadius.all(Radius.circular(20.0)),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.teal),
+                      borderSide: BorderSide(color: Color(0xFF117C02)),
                       borderRadius: BorderRadius.all(Radius.circular(20.0)),
                     ),
                     suffixIcon: Icon(Icons.email_rounded),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.teal, width: 1.0),
+                      borderSide:
+                          BorderSide(color: Color(0xFF117C02), width: 1.0),
                       borderRadius: BorderRadius.all(Radius.circular(20.0)),
                     ),
                   ),
@@ -309,11 +345,12 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
                       borderRadius: BorderRadius.all(Radius.circular(20.0)),
                     ),
                     enabledBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.teal),
+                      borderSide: BorderSide(color: Color(0xFF117C02)),
                       borderRadius: BorderRadius.all(Radius.circular(20.0)),
                     ),
                     focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.teal, width: 1.0),
+                      borderSide:
+                          BorderSide(color: Color(0xFF117C02), width: 1.0),
                       borderRadius: BorderRadius.all(Radius.circular(20.0)),
                     ),
                     suffixIcon: IconButton(
@@ -339,7 +376,7 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
                         child: ElevatedButton(
                           onPressed: login,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.teal,
+                            backgroundColor: const Color(0xFF117C02),
                             padding: const EdgeInsets.symmetric(vertical: 15.0),
                             textStyle: const TextStyle(
                               fontSize: 30,
