@@ -6,6 +6,7 @@ import 'package:memoauthapp/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:local_auth/local_auth.dart';
+import 'package:badges/badges.dart' as badges;
 
 class AuthorizationConsentScreen extends StatefulWidget {
   const AuthorizationConsentScreen({super.key});
@@ -15,16 +16,25 @@ class AuthorizationConsentScreen extends StatefulWidget {
       _AuthorizationConsentScreenState();
 }
 
-class _AuthorizationConsentScreenState
-    extends State<AuthorizationConsentScreen> {
+class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
+    with SingleTickerProviderStateMixin {
   List<dynamic> _pendingRequests = [];
-  List<dynamic> _completedRequests = [];
+  List<dynamic> _approvedRequests = [];
+  List<dynamic> _declinedRequests = [];
+  late TabController _tabController;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 3, vsync: this);
     _refreshRequests();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _refreshRequests() async {
@@ -71,8 +81,12 @@ class _AuthorizationConsentScreenState
                 ?.where((request) => request['status'] == 'PENDING')
                 .toList() ??
             [];
-        _completedRequests = jsonResponse['data']
-                ?.where((request) => request['status'] != 'PENDING')
+        _approvedRequests = jsonResponse['data']
+                ?.where((request) => request['status'] == 'APPROVED')
+                .toList() ??
+            [];
+        _declinedRequests = jsonResponse['data']
+                ?.where((request) => request['status'] == 'DECLINED')
                 .toList() ??
             [];
       });
@@ -87,7 +101,18 @@ class _AuthorizationConsentScreenState
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Success'),
+          title: const Row(
+            children: [
+              Icon(
+                Icons.check_circle_rounded,
+                color: Colors.greenAccent,
+              ),
+              SizedBox(
+                width: 8,
+              ),
+              Text('Success'),
+            ],
+          ),
           content: Text(message),
           actions: <Widget>[
             TextButton(
@@ -107,7 +132,18 @@ class _AuthorizationConsentScreenState
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Error'),
+          title: const Row(
+            children: [
+              Icon(
+                Icons.error_outline_rounded,
+                color: Colors.red,
+              ),
+              SizedBox(
+                width: 8,
+              ),
+              Text('Error'),
+            ],
+          ),
           content: Text(message),
           actions: <Widget>[
             TextButton(
@@ -278,107 +314,94 @@ class _AuthorizationConsentScreenState
                 onPressed: _isLoading ? null : _refreshRequests,
               ),
             ],
+            bottom: TabBar(
+              controller: _tabController,
+              tabs: [
+                badges.Badge(
+                  showBadge: _pendingRequests.isNotEmpty,
+                  badgeContent: Text(
+                    '${_pendingRequests.length}',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  position: badges.BadgePosition.topEnd(top: -10, end: -12),
+                  child: const Tab(
+                    icon: Icon(Icons.pending_actions, color: Colors.orange),
+                    text: 'Pending',
+                  ),
+                ),
+                const Tab(
+                  icon: Icon(Icons.check_circle, color: Colors.green),
+                  text: 'Approved',
+                ),
+                const Tab(
+                  icon: Icon(Icons.cancel, color: Colors.red),
+                  text: 'Declined',
+                ),
+              ],
+            ),
           ),
           body: _isLoading
               ? const Center(child: CircularProgressIndicator())
-              : (_pendingRequests.isEmpty && _completedRequests.isEmpty)
+              : (_pendingRequests.isEmpty &&
+                      _approvedRequests.isEmpty &&
+                      _declinedRequests.isEmpty)
                   ? const Center(child: Text('No requests found.'))
-                  : RefreshIndicator(
-                      onRefresh: _refreshRequests,
-                      child: SingleChildScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (_pendingRequests.isNotEmpty) ...[
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(
-                                  'Pending Requests',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineMedium,
-                                ),
-                              ),
-                              ListView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: _pendingRequests.length,
-                                itemBuilder: (context, index) {
-                                  final request = _pendingRequests[index];
-                                  return ListTile(
-                                    title: Text(request['title'] ?? 'No title'),
-                                    subtitle: const Text(
-                                      'PENDING',
-                                      style: TextStyle(color: Colors.orange),
-                                    ),
-                                    trailing: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: <Widget>[
-                                        IconButton(
-                                          icon: const Icon(
-                                              Icons.check_circle_rounded),
-                                          onPressed: () {
-                                            _approveRequest(
-                                                context, request['uid']);
-                                          },
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.close_rounded),
-                                          onPressed: () {
-                                            _declineRequest(
-                                                context, request['uid']);
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
-                            if (_completedRequests.isNotEmpty) ...[
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(
-                                  'Completed Requests',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineMedium,
-                                ),
-                              ),
-                              ListView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: _completedRequests.length,
-                                itemBuilder: (context, index) {
-                                  final request = _completedRequests[index];
-                                  final status =
-                                      request['status'] ?? 'No status';
-                                  Color statusColor;
-
-                                  if (status == 'APPROVED') {
-                                    statusColor = Colors.green;
-                                  } else if (status == 'DECLINED') {
-                                    statusColor = Colors.red;
-                                  } else {
-                                    statusColor = Colors.orange;
-                                  }
-
-                                  return ListTile(
-                                    title: Text(request['title'] ?? 'No title'),
-                                    subtitle: Text(
-                                      status,
-                                      style: TextStyle(color: statusColor),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
+                  : TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _buildRequestList(
+                            _pendingRequests, 'PENDING', Colors.orange),
+                        _buildRequestList(
+                            _approvedRequests, 'APPROVED', Colors.green),
+                        _buildRequestList(
+                            _declinedRequests, 'DECLINED', Colors.red),
+                      ],
                     ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildRequestList(
+      List<dynamic> requests, String status, Color statusColor) {
+    if (requests.isEmpty) {
+      return const Center(child: Text('No requests found.'));
+    }
+
+    return RefreshIndicator(
+      onRefresh: _refreshRequests,
+      child: ListView.builder(
+        itemCount: requests.length,
+        itemBuilder: (context, index) {
+          final request = requests[index];
+          return ListTile(
+            title: Text(request['title'] ?? 'No title'),
+            subtitle: Text(
+              status,
+              style: TextStyle(color: statusColor),
+            ),
+            trailing: status == 'PENDING'
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      IconButton(
+                        icon:
+                            const Icon(Icons.check_circle, color: Colors.green),
+                        onPressed: () {
+                          _approveRequest(context, request['uid']);
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.cancel, color: Colors.red),
+                        onPressed: () {
+                          _declineRequest(context, request['uid']);
+                        },
+                      ),
+                    ],
+                  )
+                : null,
+          );
+        },
       ),
     );
   }

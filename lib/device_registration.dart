@@ -1,4 +1,4 @@
-// ignore_for_file: camel_case_types, avoid_print
+// ignore_for_file: camel_case_types, avoid_print, use_build_context_synchronously, unused_element
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -21,7 +21,7 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
 
   Future<void> _registerDevice() async {
     if (_deviceNameController.text.trim().isEmpty) {
-      _showErrorDialog('Please enter a valid device name');
+      _showWarningDialog(context, 'Please enter a valid device name');
       return;
     }
 
@@ -70,7 +70,7 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
       if (registerResponse.statusCode >= 200 &&
           registerResponse.statusCode <= 300) {
         await prefs.setString(sharedPrefKeyDeviceCode, deviceCode);
-        _showSuccessfulDialog('Device registered successfully!').then((_) {
+        _showSuccessfulDialog(context, 'Device registered successfully!').then((_) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const AuthorizationConsentScreen()),
@@ -84,7 +84,7 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
             'Failed to register device. Status code: ${registerResponse.statusCode}');
       }
     } catch (e) {
-      _showErrorDialog('Failed to register device: $e');
+      _showErrorDialog(context, 'Failed to register device: $e');
     } finally {
       setState(() {
         _isLoading = false;
@@ -92,19 +92,30 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
     }
   }
 
-  void _showErrorDialog(String message) {
-    showDialog(
+   Future<void> _showErrorDialog(BuildContext context, String message) {
+    return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Error'),
+          title: const Row(
+            children: [
+              Icon(
+                Icons.error_outline_rounded,
+                color: Colors.red,
+              ),
+              SizedBox(
+                width: 8,
+              ),
+              Text('Error'),
+            ],
+          ),
           content: Text(message),
           actions: <Widget>[
             TextButton(
-              child: const Text('OK'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
+              child: const Text('OK'),
             ),
           ],
         );
@@ -112,19 +123,61 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
     );
   }
 
-  Future<void> _showSuccessfulDialog(String message) async {
+    Future<void> _showSuccessfulDialog(BuildContext context, String message) {
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Success'),
+          title: const Row(
+            children: [
+              Icon(
+                Icons.check_circle_rounded,
+                color: Colors.greenAccent,
+              ),
+              SizedBox(
+                width: 8,
+              ),
+              Text('Success'),
+            ],
+          ),
           content: Text(message),
           actions: <Widget>[
             TextButton(
-              child: const Text('OK'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+    Future<void> _showWarningDialog(BuildContext context, String message) {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(
+                Icons.warning_rounded,
+                color: Colors.orangeAccent,
+              ),
+              SizedBox(
+                width: 8,
+              ),
+              Text('Warning'),
+            ],
+          ),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK'),
             ),
           ],
         );

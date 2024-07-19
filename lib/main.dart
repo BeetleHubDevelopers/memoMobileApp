@@ -49,8 +49,7 @@ class SplashScreenState extends State<SplashScreen> {
         print("Token is not null. Validating...");
         try {
           var response = await httpClient.get(
-            Uri.parse(
-                '$apiBaseUrl/auth/check-auth'),
+            Uri.parse('$apiBaseUrl/auth/check-auth'),
             headers: {
               'Content-Type': 'application/json',
               'Authorization': 'Bearer $token'
@@ -128,7 +127,7 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
     final String password = _passwordController.text;
 
     if (username.isEmpty || password.isEmpty) {
-      _showWarningDialog('Email and Password cannot be empty');
+      _showWarningDialog(context, 'Email and Password cannot be empty');
       return;
     }
 
@@ -139,8 +138,7 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
     //this handles the request from the login endpoint
     try {
       var response = await httpClient.post(
-        Uri.parse(
-            '$apiBaseUrl/auth/login'),
+        Uri.parse('$apiBaseUrl/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'username': username, 'password': password}),
       );
@@ -152,10 +150,10 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
           String accessToken = responseBody['data']['access_token'] as String;
           SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.setString(sharedPrefKeyAccessToken, accessToken);
-          
+
           var deviceCode = prefs.getString(sharedPrefKeyDeviceCode);
 
-          _showSuccessfulDialog('Login Successful!').then((_) {
+          _showSuccessfulDialog(context, 'Login Successful!').then((_) {
             if (mounted) {
               if (deviceCode != null) {
                 Navigator.pushReplacement(
@@ -173,13 +171,15 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
             }
           });
         } else {
-          _showErrorDialog('Login failed. Please check your credentials.');
+          _showErrorDialog(
+              context, 'Login failed. Please check your credentials.');
         }
       } else {
-        _showErrorDialog('Login failed. Please try again later.');
+        _showErrorDialog(context, 'Login failed. Please try again later.');
       }
     } catch (e) {
-      _showErrorDialog('An error occurred. Please try again later. Error: $e');
+      _showErrorDialog(
+          context, 'An error occurred. Please try again later. Error: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -190,19 +190,30 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
   }
 
   //displays whatever errors encountered
-  Future<void> _showErrorDialog(String message) async {
+  Future<void> _showErrorDialog(BuildContext context, String message) {
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Error'),
+          title: const Row(
+            children: [
+              Icon(
+                Icons.error_outline_rounded,
+                color: Colors.red,
+              ),
+              SizedBox(
+                width: 8,
+              ),
+              Text('Error'),
+            ],
+          ),
           content: Text(message),
           actions: <Widget>[
             TextButton(
-              child: const Text('OK'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
+              child: const Text('OK'),
             ),
           ],
         );
@@ -210,19 +221,30 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
     );
   }
 
-  Future<void> _showWarningDialog(String message) async {
+  Future<void> _showWarningDialog(BuildContext context, String message) {
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Warning'),
+          title: const Row(
+            children: [
+              Icon(
+                Icons.warning_rounded,
+                color: Colors.orangeAccent,
+              ),
+              SizedBox(
+                width: 8,
+              ),
+              Text('Warning'),
+            ],
+          ),
           content: Text(message),
           actions: <Widget>[
             TextButton(
-              child: const Text('OK'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
+              child: const Text('OK'),
             ),
           ],
         );
@@ -230,19 +252,30 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
     );
   }
 
-  Future<void> _showSuccessfulDialog(String message) async {
+  Future<void> _showSuccessfulDialog(BuildContext context, String message) {
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Success'),
+          title: const Row(
+            children: [
+              Icon(
+                Icons.check_circle_rounded,
+                color: Colors.greenAccent,
+              ),
+              SizedBox(
+                width: 8,
+              ),
+              Text('Success'),
+            ],
+          ),
           content: Text(message),
           actions: <Widget>[
             TextButton(
-              child: const Text('OK'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
+              child: const Text('OK'),
             ),
           ],
         );
