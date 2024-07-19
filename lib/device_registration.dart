@@ -12,7 +12,8 @@ class DeviceRegistrationScreen extends StatefulWidget {
   const DeviceRegistrationScreen({super.key});
 
   @override
-  State<DeviceRegistrationScreen> createState() => _DeviceRegistrationScreenState();
+  State<DeviceRegistrationScreen> createState() =>
+      _DeviceRegistrationScreenState();
 }
 
 class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
@@ -54,8 +55,7 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
       }*/
 
       final registerResponse = await httpClient.post(
-        Uri.parse(
-            '$apiBaseUrl/profile/devices/create'),
+        Uri.parse('$apiBaseUrl/profile/devices/create'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $accessToken'
@@ -70,10 +70,12 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
       if (registerResponse.statusCode >= 200 &&
           registerResponse.statusCode <= 300) {
         await prefs.setString(sharedPrefKeyDeviceCode, deviceCode);
-        _showSuccessfulDialog(context, 'Device registered successfully!').then((_) {
+        _showSuccessfulDialog(context, 'Device registered successfully!')
+            .then((_) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const AuthorizationConsentScreen()),
+            MaterialPageRoute(
+                builder: (context) => const AuthorizationConsentScreen()),
           );
         });
       } else {
@@ -92,7 +94,7 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
     }
   }
 
-   Future<void> _showErrorDialog(BuildContext context, String message) {
+  Future<void> _showErrorDialog(BuildContext context, String message) {
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
@@ -123,7 +125,7 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
     );
   }
 
-    Future<void> _showSuccessfulDialog(BuildContext context, String message) {
+  Future<void> _showSuccessfulDialog(BuildContext context, String message) {
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
@@ -154,7 +156,7 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
     );
   }
 
-    Future<void> _showWarningDialog(BuildContext context, String message) {
+  Future<void> _showWarningDialog(BuildContext context, String message) {
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
@@ -229,11 +231,12 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
                       borderRadius: BorderRadius.all(Radius.circular(20.0)),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.teal),
+                      borderSide: BorderSide(color: Color(0xFF117C02)),
                       borderRadius: BorderRadius.all(Radius.circular(20.0)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.teal, width: 1.0),
+                      borderSide:
+                          BorderSide(color: Color(0xFF117C02), width: 1.0),
                       borderRadius: BorderRadius.all(Radius.circular(20.0)),
                     ),
                   ),
@@ -247,7 +250,7 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
                         child: ElevatedButton(
                           onPressed: _registerDevice,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.teal,
+                            backgroundColor: const Color(0xFF117C02),
                             padding: const EdgeInsets.symmetric(vertical: 15.0),
                             textStyle: const TextStyle(
                               fontSize: 30,
