@@ -322,12 +322,13 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
                       borderRadius: BorderRadius.all(Radius.circular(20.0)),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.teal),
+                      borderSide: BorderSide(color: Color(0xFF117C02)),
                       borderRadius: BorderRadius.all(Radius.circular(20.0)),
                     ),
                     suffixIcon: Icon(Icons.email_rounded),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.teal, width: 1.0),
+                      borderSide:
+                          BorderSide(color: Color(0xFF117C02), width: 1.0),
                       borderRadius: BorderRadius.all(Radius.circular(20.0)),
                     ),
                   ),
@@ -342,11 +343,12 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
                       borderRadius: BorderRadius.all(Radius.circular(20.0)),
                     ),
                     enabledBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.teal),
+                      borderSide: BorderSide(color: Color(0xFF117C02)),
                       borderRadius: BorderRadius.all(Radius.circular(20.0)),
                     ),
                     focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.teal, width: 1.0),
+                      borderSide:
+                          BorderSide(color: Color(0xFF117C02), width: 1.0),
                       borderRadius: BorderRadius.all(Radius.circular(20.0)),
                     ),
                     suffixIcon: IconButton(
@@ -372,7 +374,7 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
                         child: ElevatedButton(
                           onPressed: login,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.teal,
+                            backgroundColor: const Color(0xFF117C02),
                             padding: const EdgeInsets.symmetric(vertical: 15.0),
                             textStyle: const TextStyle(
                               fontSize: 30,
