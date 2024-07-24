@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:memoauthapp/constants.dart';
 import 'package:memoauthapp/main.dart';
+import 'package:memoauthapp/notification_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:local_auth/local_auth.dart';
@@ -44,7 +45,7 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
     try {
       await fetchRequests();
     } catch (e) {
-      _showErrorDialog(context, 'Error fetching requests: $e');
+      _showErrorDialog(context, 'Error fetching requests');
     } finally {
       setState(() {
         _isLoading = false;
@@ -91,8 +92,8 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
             [];
       });
     } else {
-      throw Exception(
-          'Failed to load requests: ${response.statusCode} ${response.body}');
+      throw Exception('Failed to load requests');
+      //${response.statusCode} ${response.body}
     }
   }
 
@@ -105,7 +106,7 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
             children: [
               Icon(
                 Icons.check_circle_rounded,
-                color: Colors.greenAccent,
+                color: Color(0xFF117C02),
               ),
               SizedBox(
                 width: 8,
@@ -199,11 +200,11 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
             fetchRequests();
           });
         } else {
-          throw Exception(
-              'Failed to approve request: ${response.statusCode} ${response.body}');
+          throw Exception('Failed to approve request}');
+          //${response.statusCode} ${response.body
         }
       } catch (e) {
-        _showErrorDialog(context, 'Failed to approve request: $e');
+        _showErrorDialog(context, 'Failed to approve request');
       } finally {}
     }
   }
@@ -266,8 +267,8 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
             fetchRequests();
           });
         } else {
-          throw Exception(
-              'Failed to decline request: ${response.statusCode} ${response.body}');
+          throw Exception('Failed to decline request}');
+          //${response.statusCode} ${response.body
         }
       } catch (e) {
         _showErrorDialog(context, 'Failed to decline request: $e');
@@ -330,7 +331,7 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
                   ),
                 ),
                 const Tab(
-                  icon: Icon(Icons.check_circle, color: Colors.green),
+                  icon: Icon(Icons.check_circle, color: Color(0xFF117C02)),
                   text: 'Approved',
                 ),
                 const Tab(
@@ -352,11 +353,24 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
                         _buildRequestList(
                             _pendingRequests, 'PENDING', Colors.orange),
                         _buildRequestList(
-                            _approvedRequests, 'APPROVED', Colors.green),
+                            _approvedRequests, 'APPROVED', const Color(0xFF117C02)),
                         _buildRequestList(
                             _declinedRequests, 'DECLINED', Colors.red),
                       ],
                     ),
+          floatingActionButton: FloatingActionButton(
+            backgroundColor: const Color(0xFF117C02),
+            onPressed: () {
+              Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const NotificationScreen()));
+            },
+            child: const Icon(
+              Icons.notifications_rounded,
+              color: Colors.white,
+            ),
+          ),
         ),
       ),
     );
@@ -386,7 +400,7 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
                     children: <Widget>[
                       IconButton(
                         icon:
-                            const Icon(Icons.check_circle, color: Colors.green),
+                            const Icon(Icons.check_circle, color: Color(0xFF117C02)),
                         onPressed: () {
                           _approveRequest(context, request['uid']);
                         },

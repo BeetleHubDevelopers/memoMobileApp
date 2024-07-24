@@ -3,7 +3,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:memoauthapp/constants.dart';
-import 'package:memoauthapp/main.dart';
 import 'package:memoauthapp/authorization_consent.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -35,25 +34,6 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
     final accessToken = prefs.getString(sharedPrefKeyAccessToken) ?? "";
 
     try {
-      /*final checkResponse = await http.get(
-        Uri.parse(
-            '$apiBaseUrl/profile/devices/create'),
-        headers: {
-          'Authorization': 'Bearer $accessToken',
-        },
-      );
-
-      if (checkResponse.statusCode >= 200 && checkResponse.statusCode <= 300) {
-        final responseData = jsonDecode(checkResponse.body);
-        if (responseData['data'] == true) {
-          setState(() {
-            _isLoading = false;
-          });
-          _showErrorDialog('Device is already registered');
-          return;
-        }
-      }*/
-
       final registerResponse = await httpClient.post(
         Uri.parse('$apiBaseUrl/profile/devices/create'),
         headers: {
@@ -79,14 +59,14 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
           );
         });
       } else {
-        print(
-            'Failed to register device. Status code: ${registerResponse.statusCode}');
-        print('Response body: ${registerResponse.body}');
+        print('Failed to register device');
+        //${registerResponse.statusCode}');
+        // print('Response body: ${registerResponse.body}');
         throw Exception(
-            'Failed to register device. Status code: ${registerResponse.statusCode}');
+            'Failed to register device'); //${registerResponse.statusCode}');
       }
     } catch (e) {
-      _showErrorDialog(context, 'Failed to register device: $e');
+      _showErrorDialog(context, 'Failed to register device');
     } finally {
       setState(() {
         _isLoading = false;
@@ -134,7 +114,7 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
             children: [
               Icon(
                 Icons.check_circle_rounded,
-                color: Colors.greenAccent,
+                color: Color(0xFF117C02),
               ),
               SizedBox(
                 width: 8,
@@ -192,15 +172,15 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const LoginScreenPage()),
-            );
-          },
-        ),
+        // leading: IconButton(
+        //   icon: const Icon(Icons.arrow_back_ios_new_rounded),
+        //   onPressed: () {
+        //     Navigator.pushReplacement(
+        //       context,
+        //       MaterialPageRoute(builder: (context) => const LoginScreenPage()),
+        //     );
+        //   },
+        // ),
       ),
       backgroundColor: Colors.white,
       body: Center(
@@ -213,16 +193,16 @@ class _DeviceRegistrationScreenState extends State<DeviceRegistrationScreen> {
               children: <Widget>[
                 Center(
                   child: Image.asset(
-                    'assets/kdsglogo.png',
-                    height: 150,
-                    width: 150,
+                    'assets/KDSG.jpeg',
+                    height: 100,
+                    width: 100,
                   ),
                 ),
                 const Text(
                   'Register Device',
-                  style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 32.0),
+                const SizedBox(height: 20.0),
                 TextField(
                   controller: _deviceNameController,
                   decoration: const InputDecoration(

@@ -7,6 +7,13 @@
     <!-- Permission for fingerprint authentication (for older versions of Android)
     <uses-permission android:name="android.permission.USE_FINGERPRINT" /> -->
 
+
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE"/>
+
     <application
         android:label="KDSG Authenticator"
         android:name="${applicationName}"
@@ -33,6 +40,30 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+          <!-- Add AwesomeNotifications broadcast receiver -->
+        <receiver android:name="me.carda.awesome_notifications.notifications.receivers.ActionReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="me.carda.awesome_notifications.notifications.action.RECEIVE_ACTION" />
+            </intent-filter>
+        </receiver>
+
+        <service android:name="me.carda.awesome_notifications.notifications.services.NotificationService" android:permission="android.permission.BIND_JOB_SERVICE" android:exported="true"/>
+        <service android:name="me.carda.awesome_notifications.notifications.services.NotificationForegroundService" android:foregroundServiceType="dataSync|location" android:permission="android.permission.BIND_JOB_SERVICE" android:exported="true"/>
+
+        <receiver android:name="me.carda.awesome_notifications.notifications.receivers.DismissedReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="me.carda.awesome_notifications.notifications.action.DISMISSED_ACTION" />
+            </intent-filter>
+        </receiver>
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="kdsg_channel"/>
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_launcher"/>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

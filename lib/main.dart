@@ -1,6 +1,7 @@
-//ignore_for_file: use_build_context_synchronously, unused_element, avoid_print, unused_local_variable
+//ignore_for_file: use_build_context_synchronously, unused_element, avoid_print, unused_local_variable, dead_code
 
 import 'dart:convert';
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:memoauthapp/constants.dart';
 import 'package:memoauthapp/device_registration.dart';
@@ -8,6 +9,21 @@ import 'package:memoauthapp/authorization_consent.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  AwesomeNotifications().initialize(
+    'resource://drawable/ic_launcher', // Your app icon here
+    [
+      NotificationChannel(
+        channelKey: 'kdsg_channel',
+        channelName: 'Kdsg notifications',
+        channelDescription: 'Kdsg notifications',
+        defaultColor: const Color(0xFA4D50DD),
+        ledColor: Colors.white,
+      )
+    ],
+  );
+
   runApp(const LoginScreen());
 }
 
@@ -63,7 +79,7 @@ class SplashScreenState extends State<SplashScreen> {
           }
         } catch (e) {
           print("An error occurred!");
-          print(e);
+          // print(e);
         }
       }
 
@@ -85,24 +101,44 @@ class SplashScreenState extends State<SplashScreen> {
   //the first screen you see (splash screen) before the login screen
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: Colors.white,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Image(
-              image: AssetImage('assets/kdsglogo.png'),
-              width: 150,
-              height: 150,
+      body: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/KDSG.jpeg',
+                    width: 100,
+                    height: 100,
+                  ),
+                  const SizedBox(height: 15),
+                  const Text(
+                    "KDSG Authenticator",
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
             ),
-            SizedBox(height: 20),
-            Text(
-              "KDSG Authenticator",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const Padding(
+            padding: EdgeInsets.all(6.0),
+            child: Text(
+              '© 2024 KDSG. All rights reserved.',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w300),
             ),
-          ],
-        ),
+          ),
+          const Padding(
+            padding: EdgeInsets.all(6.0),
+            child: Text(
+              'Powered by turtletech.',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w300),
+            ),
+          )
+        ],
       ),
     );
   }
@@ -178,8 +214,7 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
         _showErrorDialog(context, 'Login failed. Please try again later.');
       }
     } catch (e) {
-      _showErrorDialog(
-          context, 'An error occurred. Please try again later. Error: $e');
+      _showErrorDialog(context, 'An error occurred. Please try again later.');
     } finally {
       if (mounted) {
         setState(() {
@@ -261,7 +296,7 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
             children: [
               Icon(
                 Icons.check_circle_rounded,
-                color: Colors.greenAccent,
+                color: Color(0xFF117C02),
               ),
               SizedBox(
                 width: 8,
@@ -295,25 +330,25 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
         child: SingleChildScrollView(
           child: Container(
             color: Colors.transparent,
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(20.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 Center(
                   child: Image.asset(
-                    'assets/kdsglogo.png',
-                    height: 150,
-                    width: 150,
+                    'assets/KDSG.jpeg',
+                    height: 100,
+                    width: 100,
                   ),
                 ),
                 const SizedBox(
-                  height: 20.0,
+                  height: 5.0,
                 ),
                 const Text(
                   'Login',
                   style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 32.0),
+                const SizedBox(height: 35.0),
                 TextField(
                   controller: _emailController,
                   decoration: const InputDecoration(

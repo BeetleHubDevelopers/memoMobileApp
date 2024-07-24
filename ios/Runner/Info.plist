@@ -22,6 +22,8 @@
 		<string>We use Face ID to authenticate you for secure access to the app.</string>
 		<key>NSBiometricUsageDescription</key>
 		<string>We use biometrics to authenticate you for secure access to the app.</string>
+		<key>NSUserTrackingUsageDescription</key>
+		<string>We will use your data to provide better services</string>
 		<key>CFBundleShortVersionString</key>
 		<string>$(FLUTTER_BUILD_NAME)</string>
 		<key>CFBundleSignature</key>
@@ -47,11 +49,21 @@
 			<string>UIInterfaceOrientationLandscapeLeft</string>
 			<string>UIInterfaceOrientationLandscapeRight</string>
 		</array>
+		<key>UIBackgroundModes</key>
+		<array>
+    		<string>fetch</string>
+    		<string>remote-notification</string>
+		</array>
 		<key>CADisableMinimumFrameDurationOnPhone</key>
 		<true/>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>FirebaseAppDelegateProxyEnabled</key>
+		<false/>
+		<key>NSAppTransportSecurity</key>
+		<key>NSAllowsArbitraryLoads</key>
+  	   	<true/>
 	</dict>
 </plist>
