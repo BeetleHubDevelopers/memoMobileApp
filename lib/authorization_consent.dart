@@ -43,7 +43,7 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
       _isLoading = true;
     });
     await Future.delayed(
-        const Duration(milliseconds: 15)); // Ensure dialog displays
+        const Duration(milliseconds: 5)); // Ensure dialog displays
     _showNotificationDialog('Please wait', 'Retrieving requests...');
     try {
       await fetchRequests();
