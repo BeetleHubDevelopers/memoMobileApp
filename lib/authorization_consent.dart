@@ -42,6 +42,9 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
     setState(() {
       _isLoading = true;
     });
+    await Future.delayed(
+        const Duration(milliseconds: 100)); // Ensure dialog displays
+    _showNotificationDialog('Please wait', 'Retrieving requests...');
     try {
       await fetchRequests();
     } catch (e) {
@@ -93,8 +96,26 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
       });
     } else {
       throw Exception('Failed to load requests');
-      //${response.statusCode} ${response.body}
     }
+  }
+
+  Future<void> _showNotificationDialog(String title, String body) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Row(
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 16),
+              Text(body),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _showSuccessfulDialog(BuildContext context, String message) {
@@ -200,8 +221,7 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
             fetchRequests();
           });
         } else {
-          throw Exception('Failed to approve request}');
-          //${response.statusCode} ${response.body
+          throw Exception('Failed to approve request');
         }
       } catch (e) {
         _showErrorDialog(context, 'Failed to approve request');
@@ -267,8 +287,7 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
             fetchRequests();
           });
         } else {
-          throw Exception('Failed to decline request}');
-          //${response.statusCode} ${response.body
+          throw Exception('Failed to decline request');
         }
       } catch (e) {
         _showErrorDialog(context, 'Failed to decline request: $e');
@@ -311,9 +330,14 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
             ),
             actions: <Widget>[
               IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: _isLoading ? null : _refreshRequests,
-              ),
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () async {
+                    if (!_isLoading) {
+                      _showNotificationDialog(
+                          'Please wait', 'Retrieving requests...');
+                      await _refreshRequests();
+                    }
+                  }),
             ],
             bottom: TabBar(
               controller: _tabController,
@@ -352,8 +376,8 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
                       children: [
                         _buildRequestList(
                             _pendingRequests, 'PENDING', Colors.orange),
-                        _buildRequestList(
-                            _approvedRequests, 'APPROVED', const Color(0xFF117C02)),
+                        _buildRequestList(_approvedRequests, 'APPROVED',
+                            const Color(0xFF117C02)),
                         _buildRequestList(
                             _declinedRequests, 'DECLINED', Colors.red),
                       ],
@@ -399,8 +423,8 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       IconButton(
-                        icon:
-                            const Icon(Icons.check_circle, color: Color(0xFF117C02)),
+                        icon: const Icon(Icons.check_circle,
+                            color: Color(0xFF117C02)),
                         onPressed: () {
                           _approveRequest(context, request['uid']);
                         },

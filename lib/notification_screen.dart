@@ -55,8 +55,15 @@ class _NotificationScreenState extends State<NotificationScreen> {
     setState(() {
       _isLoading = true;
     });
+
     try {
-      await fetchNotifications();
+      await _fetchNotifications();
+      if (_notifications.isNotEmpty) {
+        await _showSuccessfulDialog(
+            context, 'Notifications retrieved successfully!');
+      } else {
+        await _showErrorDialog(context, 'No notifications found.');
+      }
     } catch (e) {
       if (mounted) {
         await _showErrorDialog(context, 'Error fetching notifications');
@@ -70,7 +77,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     }
   }
 
-  Future<void> fetchNotifications() async {
+  Future<void> _fetchNotifications() async {
     final prefs = await SharedPreferences.getInstance();
     var accessToken = prefs.getString(sharedPrefKeyAccessToken) ?? '';
 
@@ -87,17 +94,15 @@ class _NotificationScreenState extends State<NotificationScreen> {
       },
     );
 
-    if (response.statusCode == 404) {
-      await _showErrorDialog(context, 'Page not found');
-      return;
-    } else if (response.statusCode >= 200 && response.statusCode < 300) {
+    if (response.statusCode >= 200 && response.statusCode < 300) {
       var jsonResponse = json.decode(response.body);
-      // Handle the response as per your requirement
-      await _showSuccessfulDialog(
-          context, 'Notifications retrieved successfully!');
+      setState(() {
+        _notifications = List<String>.from(jsonResponse['notifications'] ?? []);
+      });
+    } else if (response.statusCode == 404) {
+      throw Exception('Notifications not found');
     } else {
-      throw Exception(
-          'Failed to load notifications'); //: ${response.statusCode} ${response.body}
+      throw Exception('Failed to load notifications');
     }
   }
 
@@ -207,9 +212,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
         ),
         actions: <Widget>[
           IconButton(
-            onPressed: () {
+            onPressed: () async {
               if (!_isLoading) {
-                _refreshNotifications();
+                await _showNotificationDialog(
+                    'Please wait', 'Retrieving notifications...');
+                await _refreshNotifications();
               }
             },
             icon: const Icon(Icons.refresh),
