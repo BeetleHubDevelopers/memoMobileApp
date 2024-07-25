@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously, unused_local_variable, prefer_final_fields, avoid_print
+// ignore_for_file: use_build_context_synchronously, unused_local_variable, prefer_final_fields, avoid_print, unused_element
 
 import 'dart:convert';
 import 'package:awesome_notifications/awesome_notifications.dart';
@@ -55,25 +55,17 @@ class _NotificationScreenState extends State<NotificationScreen> {
     setState(() {
       _isLoading = true;
     });
-
+    await Future.delayed(
+        const Duration(milliseconds: 5)); // Ensure dialog displays
+    _showNotificationDialog('Please wait', 'Retrieving notifications...');
     try {
       await _fetchNotifications();
-      if (_notifications.isNotEmpty) {
-        await _showSuccessfulDialog(
-            context, 'Notifications retrieved successfully!');
-      } else {
-        await _showErrorDialog(context, 'No notifications found.');
-      }
     } catch (e) {
-      if (mounted) {
-        await _showErrorDialog(context, 'Error fetching notifications');
-      }
+      _showErrorDialog(context, 'Error fetching notifications');
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -107,20 +99,22 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   Future<void> _showNotificationDialog(String title, String body) async {
-    await showDialog<void>(
+    showDialog<void>(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext context) {
+        Future.delayed(const Duration(seconds: 5), () {
+          Navigator.of(context).pop();
+        });
         return AlertDialog(
           title: Text(title),
-          content: Text(body),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('OK'),
-            ),
-          ],
+          content: Row(
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 16),
+              Text(body),
+            ],
+          ),
         );
       },
     );

@@ -100,10 +100,13 @@ class _AuthorizationConsentScreenState extends State<AuthorizationConsentScreen>
   }
 
   Future<void> _showNotificationDialog(String title, String body) async {
-    await showDialog<void>(
+    showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
+        Future.delayed(const Duration(seconds: 5), () {
+          Navigator.of(context).pop();
+        });
         return AlertDialog(
           title: Text(title),
           content: Row(
