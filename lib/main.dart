@@ -153,14 +153,14 @@ class LoginScreenPage extends StatefulWidget {
 
 //declaration of variables for the email and password
 class _LoginScreenPageState extends State<LoginScreenPage> {
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _textController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isLoading = false;
 
   Future<void> login() async {
-    final String username = _emailController.text;
-    final String password = _passwordController.text;
+    final String username = _textController.text.trim();
+    final String password = _passwordController.text.trim();
 
     if (username.isEmpty || password.isEmpty) {
       _showWarningDialog(context, 'Email and Password cannot be empty');
@@ -350,7 +350,7 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
                 ),
                 const SizedBox(height: 35.0),
                 TextField(
-                  controller: _emailController,
+                  controller: _textController,
                   decoration: const InputDecoration(
                     labelText: 'Email',
                     border: OutlineInputBorder(
@@ -360,14 +360,14 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
                       borderSide: BorderSide(color: Color(0xFF117C02)),
                       borderRadius: BorderRadius.all(Radius.circular(20.0)),
                     ),
-                    suffixIcon: Icon(Icons.email_rounded),
+                    suffixIcon: Icon(Icons.person_rounded),
                     focusedBorder: OutlineInputBorder(
                       borderSide:
                           BorderSide(color: Color(0xFF117C02), width: 1.0),
                       borderRadius: BorderRadius.all(Radius.circular(20.0)),
                     ),
                   ),
-                  keyboardType: TextInputType.emailAddress,
+                  keyboardType: TextInputType.text,
                 ),
                 const SizedBox(height: 16.0),
                 TextField(
